@@ -4,38 +4,35 @@
 #include<string.h>
 #include "dec.h"
 
-
 void menu(){
     printf("  ----- >>                                                  <<----         \n");
     printf("  |                                                               |        \n\n\n\n");
-
     printf("                          1)  NEW GAME                                     \n");
-    printf("                          2)  INSTRUCTIONS                                 \n");
-    printf("                          3)  EXIT GAME                                    \n\n\n\n");
+    printf("                          2)  EXIT GAME                                    \n\n\n\n");
     printf("  |                                                               |        \n");
     printf("  ------ >>                                                  <<----        \n");
-
     int c; 
     scanf("%d",&c);
-    fflush(stdin);
     switch(c){
-        case 1: printf("WORKING"); break;
-        case 2: break;
-        case 3: system("exit"); break;
+        case 1: system("clear"); break;
+        case 2: system("clear"); exit(0);
         default: printf("Invalid choice\n"); menu(); break;
     }
 }
 
 void initialize_player(player *p){
     print_text("Enter your name: ");
+    char garbage[20];
+    scanf("%s",garbage);
     fgets(p->name, 20, stdin);
-    p->age = 27;
-    p->alive = 1;
+    strcpy(p->name,garbage);
     p->prev_room = -1;
     p->room_no = 0;
-    p->can_sleep = 0;
+    for(int i=0;i<10;i++){
+        p->quests[i] = 0;
+    }
     strcpy(p->objective,"Meet with Phantom");
-    strcpy(p->occupation,"Employee, Liurna Department Store");
+    strcpy(p->occupation,"Employee, Morioh Department Store");
     strcpy(p->position,"Home, Northeast Section of Morioh");
 }
 
@@ -106,35 +103,62 @@ void draw_logo(){
 void print_character_intro(player *p){
     print_text("Name: ");
     print_text(p->name);
-    print_text("Age: ");
-    printf("%d\n",p->age);
+    create_space(1);
     print_text("Occupation: ");
     print_text(p->occupation);
-    printf("\n");
+    create_space(1);
     print_text("Objective: ");
     print_text(p->objective);
-    printf("\n");
+    create_space(1);
     print_text("Position: ");
     print_text(p->position);
-    printf("\n");
+    create_space(1);
 }
 
 void use_door(room *r, int choice){
-    if(r->d[choice-1].blocked){
-        print_text("Blocked\n");
-    }
-    else{
+    if(!r->d[choice-1].blocked){
         print_text(r->d[choice-1].message);
     }
 }
 
-void entered_room(player *p, room *r){
+void entered_room(player *p, room *r, npc*n){
     p->prev_room = p->room_no;
     create_space(3);
     print_text(r->description);
+    if(n->room_no == p->room_no){
+        print_text(n->speech);
+    }
 }
 
-void change_rooms(player *p, int choice){
+void locked_room(player *p, room *r){
+    print_text("\nType the answer: ");
+    char ans_in[50];
+    char ans[50] = "--,,---,.-.,..,,---,....";
+    int correct = 1;
+    scanf("%s",ans_in);
+    for(int i=0; i<20; i++){
+        if(ans_in[i]!=ans[i]){
+            correct = 0;
+            print_text("\nIncorrect\n");
+            break;
+        }
+    }
+    if(correct){
+        print_text("\nCongratulations! You solved the puzzle!\n");
+        
+        p->quests[3] = 1;
+        r->d[2].blocked = 0; 
+        r->d[3].blocked = 0;
+
+        strcpy(r->description,"You enter the room where you solved your first puzzle. The etchings on the wall are intact. Must be for newer recruits");
+        strcpy(r->front,"The door is unlocked.");
+        strcpy(r->back, r->front);
+        strcpy(r->d[2].message,"Entering the chief's room");
+        strcpy(r->d[3].message,"Entering the lobby");
+    }
+}
+
+void change_rooms(player *p, int choice, npc *n, room *r){
     if(p->room_no == 1){
         if(choice == 3){
             p->room_no = 2;
@@ -142,7 +166,12 @@ void change_rooms(player *p, int choice){
     }
     else if(p->room_no == 2){
         if(choice == 1){
-            p->room_no = 5;
+            if(p->quests[1]){
+                p->room_no = 10;
+            }
+            else{
+                print_text("Your stomach rumbles as you approach the door. You havent eaten anything yet!\n");
+            }
         }
         else if(choice == 2){
             p->room_no = 3;
@@ -158,18 +187,42 @@ void change_rooms(player *p, int choice){
         if(choice == 4){
             p->room_no = 2;
         }
+        else if(choice == 1){
+            p->quests[1] = 1;
+        }
     }
     else if(p->room_no == 4){
         if(choice == 4){
             p->room_no = 2;
         }
     }
+    else if(p->room_no == 10){
+        if(choice == 1){
+            p->quests[2] = 1;
+        }
+        else if(choice == 3){
+            p->room_no = 20;
+        }
+    }
+    else if(p->room_no == 20){
+        if(choice == 3){
+            if(p->quests[3]){
+                p->room_no = 30;
+            }
+            else{
+                locked_room(p,r);
+            }
+        }
+    }
+    else if(p->room_no == 30){
+        p->quests[3] = 1;
+    }
 }   
 
-void movement(player *p, room *r){
+void movement(player *p, room *r, npc *n){
     int choice;
     if(p->prev_room != p-> room_no){
-        entered_room(p,r);
+        entered_room(p,r, n);
     }
     printf("\n1. Go right\n2. Go left\n3. Go front\n4. Go back\n\n");
     scanf("%d",&choice);
@@ -179,7 +232,7 @@ void movement(player *p, room *r){
         case 3: print_text(r->front);   use_door(r, choice);    break;
         case 4: print_text(r->back);    use_door(r, choice);    break;
         default: printf("Invalid option\n");
-        }
-        change_rooms(p, choice);    
     }
+    change_rooms(p, choice, n, r);    
+}
  
