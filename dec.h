@@ -1,10 +1,8 @@
 typedef struct player{
     char name[20];
-    int age;
-    int alive;
     int prev_room;
     int room_no;
-    int can_sleep;
+    int quests[10];
     char objective[100];
     char position[100];
     char status[100];
@@ -12,9 +10,8 @@ typedef struct player{
 }player;
 
 typedef struct npc{
-    char name[100];
+    char name[20];
     int room_no;
-    int quest_done;
     char speech[1000];
 }npc;
 
@@ -25,11 +22,11 @@ typedef struct door{
 
 typedef struct room{
     int no;
-    char description[200];
-    char left[100];
-    char right[100];
-    char front[100];
-    char back[100];
+    char description[500];
+    char left[500];
+    char right[500];
+    char front[500];
+    char back[500];
     door d[4];
 }room;
 
@@ -46,6 +43,7 @@ void print_character_intro(player *p);
 int is_alive(int *hp, int *alive);
 
 void use_door(room *r, int choice);
-void entered_room(player *p, room *r);
-void movement(player *p, room *r);
-void change_rooms(player *p, int choice);
+void entered_room(player *p, room *r, npc *n);
+void movement(player *p, room *r, npc *n);
+void change_rooms(player *p, int choice, npc *n, room *r);
+void locked_room(player *p, room *r);
