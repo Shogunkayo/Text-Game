@@ -153,10 +153,46 @@ void locked_room(player *p, room *r){
         strcpy(r->description,"You enter the room where you solved your first puzzle. The etchings on the wall are intact. Must be for newer recruits");
         strcpy(r->front,"The door is unlocked.");
         strcpy(r->back, r->front);
-        strcpy(r->d[2].message,"Entering the chief's room");
-        strcpy(r->d[3].message,"Entering the lobby");
+        strcpy(r->d[2].message,"\nEntering the chief's room\n");
+        strcpy(r->d[3].message,"\nEntering the lobby\n");
     }
 }
+
+
+void name_check(player *p, room *r){
+    char ans_in[50] = " ";
+    char ans[50] = "Forger";
+    print_text("\n\nType your name\n");
+    scanf("%s",ans_in);
+    while(strcmp(ans_in,ans)){
+        print_text("Selino says 'Uhmm, there is no name like that in the register.'\n");
+        scanf("%s",ans_in);
+    }
+    p->quests[4] = 1;
+    print_text("\nSelino says 'Welcome to the Nuclear Research Laboratory, Professor'\n");
+    
+}
+
+void crack_safe(player *p, room *r){
+    int ans = 3271;
+    int ans_in;
+    print_text("\nYou read the message written on the sheet.\n");
+    print_text("\n\n           CRACK THE CODE TO CONTINUE!!!!!!!          \n -------    I AM A 4 DIGIT ODD NUMBER        -------- \n-------- 4th DIGIT IS ODD AND  IS LESS THAN 3 --------\n-------- 1st DIGIT IS MORE THAN 4TH DIGIT     --------\n-------- 2nd DIGIT IS THE SMALLEST PRIME NUMBER ------\n--------  SUM OF FIRST THREE DIGITS IS  12     -------\n========== GUESS THE CORRECT ANSWER ==================\n              4271                                  \n              3272                                  \n              3271                                  \n              4252                                  \n");
+    
+    scanf("%d",&ans_in);
+    while(ans!=ans_in){
+        print_text("You enter the code and try to open the safe. Its still locked.\n");
+        scanf("%d",&ans_in);
+    }
+
+    print_text("You enter the code and try to open the safe. The door pops out.\n");
+    p->quests[5] = 1;
+    print_text("There are tons of research papers in the safe. They seem to be important. You put all of them into your bag\n");
+    strcpy(r->left, "There is the safe you opened.");
+    strcpy(r->d[1].message, "\nThe safe is empty\n");
+
+}
+
 
 void change_rooms(player *p, int choice, npc *n, room *r){
     if(p->room_no == 1){
@@ -216,6 +252,43 @@ void change_rooms(player *p, int choice, npc *n, room *r){
     }
     else if(p->room_no == 30){
         p->quests[3] = 1;
+        if(choice == 4){
+            p->room_no = 20;
+        }
+        else if(choice == 3){
+            p->room_no = 100;
+        }
+    }
+
+    else if(p->room_no == 100){
+        if(choice == 3){
+            p->room_no = 200;
+        }
+    }
+
+    else if(p->room_no == 200){
+        if(p->quests[4]){
+            if(choice == 1){
+                p->room_no = 300;
+            }
+            if(choice == 4){
+                p->room_no = 100;
+            }
+        }
+        else{
+            name_check(p,r);
+        }
+    }
+
+    else if(p->room_no == 300){
+        if(choice == 4){
+            p->room_no = 200;
+        }
+        else if(choice == 2){
+            if(!p->quests[5]){
+                crack_safe(p,r);
+            }
+        }
     }
 }   
 
@@ -223,6 +296,9 @@ void movement(player *p, room *r, npc *n){
     int choice;
     if(p->prev_room != p-> room_no){
         entered_room(p,r, n);
+    }
+    if(p->room_no == 200 && p->quests[4] == 0){
+        change_rooms(p,choice,n,r);
     }
     printf("\n1. Go right\n2. Go left\n3. Go front\n4. Go back\n\n");
     scanf("%d",&choice);
@@ -235,4 +311,3 @@ void movement(player *p, room *r, npc *n){
     }
     change_rooms(p, choice, n, r);    
 }
- 
