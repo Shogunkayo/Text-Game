@@ -46,4 +46,7 @@ void use_door(room *r, int choice);
 void entered_room(player *p, room *r, npc *n);
 void movement(player *p, room *r, npc *n);
 void change_rooms(player *p, int choice, npc *n, room *r);
+
 void locked_room(player *p, room *r);
+void name_check(player *p, room *r);
+void crack_safe(player *p, room*r);
